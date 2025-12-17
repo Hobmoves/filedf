@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Upload</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1c1c1c;
+            --card-border: #2a2a2a;
+            --text: #fafafa;
+            --muted: #909090;
+            --border: #333333;
+            --accent: #ffffff;
+            --danger: #dc2626;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .request-tag {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            position: relative;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .drop-zone-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--muted);
+            stroke-width: 1.5;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone-text {
+            color: var(--muted);
+            font-size: 0.875rem;
+        }
+
+        .drop-zone-hint {
+            color: #525252;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #404040;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .drop-zone:hover .drop-zone-icon,
+        .drop-zone.drag-over .drop-zone-icon {
+            background: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .drop-zone:hover .drop-zone-icon svg,
+        .drop-zone.drag-over .drop-zone-icon svg {
+            stroke: #000;
+        }
+
+        .drop-zone:hover .drop-zone-text {
+            color: var(--text);
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .file-ext {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-right: 14px;
+            min-width: 32px;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.7rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            color: #525252;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+            border-radius: 6px;
+        }
+
+        .file-remove:hover {
+            color: var(--danger);
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        /* Upload Button */
+        .upload-btn {
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 12px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .upload-btn.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .upload-btn.active:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        .upload-btn.uploading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Progress */
+        .progress-section {
+            margin-top: 1.25rem;
+            display: none;
+        }
+
+        .progress-track {
+            height: 2px;
+            background: var(--border);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        /* Error State */
+        .error-message {
+            background: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.15);
+            color: #f87171;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        /* ========== STATE SCREENS ========== */
+        
+        .state-container {
+            display: none;
+        }
+
+        .state-container.active {
+            display: block;
+        }
+
+        /* File Card */
+        .file-card {
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-card-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .file-card-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--muted);
+            stroke-width: 1.5;
+        }
+
+        .file-card-icon.success {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .file-card-icon.success svg {
+            stroke: var(--success);
+        }
+
+        .file-card-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-card-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-card-meta {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        .file-card-meta.success {
+            color: var(--success);
+        }
+
+        /* State Content */
+        .state-content {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .state-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .state-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke-width: 1.5;
+        }
+
+        .state-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.01em;
+        }
+
+        .state-subtitle {
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        /* Waiting State */
+        .state-waiting .state-icon {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .state-waiting .state-icon svg {
+            stroke: var(--muted);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Transferring State */
+        .state-transferring .state-icon {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .state-transferring .state-icon svg {
+            stroke: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Complete State */
+        .state-complete .state-icon {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .state-complete .state-icon svg {
+            stroke: var(--success);
+        }
+
+        /* Transfer Progress */
+        .transfer-progress {
+            margin-top: 1.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .transfer-progress-track {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .transfer-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .transfer-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: var(--border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--success);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-line.filling::after {
+            animation: lineFill 1.5s ease-in-out infinite;
+        }
+
+        .step-line.done::after {
+            width: 100%;
+        }
+
+        @keyframes lineFill {
+            0% { width: 0%; left: 0; }
+            50% { width: 100%; left: 0; }
+            51% { width: 100%; left: 0; }
+            100% { width: 0%; left: 100%; }
+        }
+
+        .step.active {
+            background: var(--accent);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+            animation: stepPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes stepPulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.05); }
+        }
+
+        .step.done {
+            background: var(--success);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+
+        .step.done .step-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .step-check {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .step-check svg {
+            width: 6px;
+            height: 6px;
+            stroke: var(--bg);
+            stroke-width: 3;
+        }
+
+        /* Invalid State */
+        .state-invalid .state-icon {
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .state-invalid .state-icon svg {
+            stroke: var(--danger);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Upload UI -->
+    <div id="uploadUI">
+        <div class="header">
+            <h1>Upload</h1>
+            <div class="header-meta">
+                <span>Sending to</span>
+                <span class="request-tag" id="titleTag">loading...</span>
+            </div>
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </div>
+            <div class="drop-zone-text">Drop file here or click to browse</div>
+            <div class="drop-zone-hint" id="typeHint"></div>
+            <input type="file" id="fileInput">
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+        <div class="error-message" id="errorMsg"></div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="progressStatus">Uploading...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <button class="upload-btn" id="uploadBtn">Upload</button>
+    </div>
+
+    <!-- Waiting State -->
+    <div class="state-container state-waiting" id="stateWaiting">
+        <div class="steps">
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+            <div class="step-line filling"></div>
+            <div class="step active"></div>
+            <div class="step-line"></div>
+            <div class="step"></div>
+        </div>
+
+        <div class="file-card">
+            <div class="file-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <div class="file-card-details">
+                <div class="file-card-name" id="waitingFileName">file.json</div>
+                <div class="file-card-meta" id="waitingFileMeta">Ready</div>
+            </div>
+        </div>
+
+        <div class="state-content">
+            <div class="state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div class="state-title">Waiting for server</div>
+            <div class="state-subtitle">The game will fetch your file shortly</div>
+        </div>
+    </div>
+
+    <!-- Transferring State -->
+    <div class="state-container state-transferring" id="stateTransferring">
+        <div class="steps">
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+            <div class="step-line done"></div>
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+            <div class="step-line filling"></div>
+            <div class="step active"></div>
+        </div>
+
+        <div class="file-card">
+            <div class="file-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <div class="file-card-details">
+                <div class="file-card-name" id="transferFileName">file.json</div>
+                <div class="file-card-meta" id="transferFileMeta">Transferring...</div>
+            </div>
+        </div>
+
+        <div class="state-content">
+            <div class="state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+            </div>
+            <div class="state-title">Transferring</div>
+            <div class="state-subtitle" id="transferSubtitle">Sending data to server...</div>
+        </div>
+
+        <div class="transfer-progress">
+            <div class="transfer-progress-track">
+                <div class="transfer-progress-fill" id="transferProgressFill"></div>
+            </div>
+            <div class="transfer-stats">
+                <span id="transferChunks">Chunk 0 / 0</span>
+                <span id="transferPercent">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete State -->
+    <div class="state-container state-complete" id="stateComplete">
+        <div class="steps">
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+            <div class="step-line done"></div>
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+            <div class="step-line done"></div>
+            <div class="step done"><span class="step-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></span></div>
+        </div>
+
+        <div class="file-card">
+            <div class="file-card-icon success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <div class="file-card-details">
+                <div class="file-card-name" id="completeFileName">file.json</div>
+                <div class="file-card-meta success" id="completeFileMeta">Complete</div>
+            </div>
+        </div>
+
+        <div class="state-content">
+            <div class="state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <div class="state-title">Transfer complete</div>
+            <div class="state-subtitle">Your file was received successfully</div>
+        </div>
+    </div>
+
+    <!-- Invalid State -->
+    <div class="state-container state-invalid" id="invalidState">
+        <div class="state-content" style="padding-top: 2rem;">
+            <div class="state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <div class="state-title">Session expired</div>
+            <div class="state-subtitle">This upload link is no longer valid</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sessionId = window.location.pathname.split('/').pop();
+    
+    const uploadUI = document.getElementById('uploadUI');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const errorMsg = document.getElementById('errorMsg');
+    
+    const stateWaiting = document.getElementById('stateWaiting');
+    const stateTransferring = document.getElementById('stateTransferring');
+    const stateComplete = document.getElementById('stateComplete');
+    const invalidState = document.getElementById('invalidState');
+    
+    let files = [];
+    let sessionConfig = null;
+    let pollInterval = null;
+
+    async function loadSession() {
+        try {
+            const res = await fetch(`/api/session/${sessionId}`);
+            if (!res.ok) {
+                showState('invalid');
+                return;
+            }
+            
+            const data = await res.json();
+            sessionConfig = data.config;
+            
+            const title = sessionConfig.title || 'File Upload';
+            document.getElementById('pageTitle').textContent = title;
+            document.getElementById('titleTag').textContent = `"${title}"`;
+            
+            if (sessionConfig.allowedTypes && sessionConfig.allowedTypes.length > 0) {
+                document.getElementById('typeHint').textContent = sessionConfig.allowedTypes.join(', ');
+                fileInput.accept = sessionConfig.allowedTypes.join(',');
+            }
+            
+            if (data.status === 'uploaded') {
+                showState('waiting');
+                startPolling();
+            } else if (data.status === 'claimed') {
+                showState('complete');
+            }
+        } catch (e) {
+            showState('invalid');
+        }
+    }
+
+    function showState(state) {
+        uploadUI.style.display = 'none';
+        stateWaiting.classList.remove('active');
+        stateTransferring.classList.remove('active');
+        stateComplete.classList.remove('active');
+        invalidState.classList.remove('active');
+
+        switch(state) {
+            case 'upload':
+                uploadUI.style.display = 'block';
+                break;
+            case 'waiting':
+                stateWaiting.classList.add('active');
+                break;
+            case 'transferring':
+                stateTransferring.classList.add('active');
+                break;
+            case 'complete':
+                stateComplete.classList.add('active');
+                if (pollInterval) clearInterval(pollInterval);
+                break;
+            case 'invalid':
+                invalidState.classList.add('active');
+                break;
+        }
+    }
+
+    function updateFileCards(filename, size, chunks) {
+        const sizeStr = formatSize(size);
+        
+        document.getElementById('waitingFileName').textContent = filename;
+        document.getElementById('waitingFileMeta').textContent = `${sizeStr} · ${chunks} chunks`;
+        
+        document.getElementById('transferFileName').textContent = filename;
+        
+        document.getElementById('completeFileName').textContent = filename;
+        document.getElementById('completeFileMeta').textContent = `${sizeStr} · Complete`;
+    }
+
+    function updateTransferProgress(delivered, total) {
+        const pct = Math.round((delivered / total) * 100);
+        document.getElementById('transferProgressFill').style.width = pct + '%';
+        document.getElementById('transferChunks').textContent = `Chunk ${delivered} / ${total}`;
+        document.getElementById('transferPercent').textContent = pct + '%';
+        document.getElementById('transferFileMeta').textContent = `Chunk ${delivered} of ${total}`;
+        document.getElementById('transferSubtitle').textContent = 
+            delivered < total ? `Sending chunk ${delivered + 1}...` : 'Finalizing...';
+    }
+
+    function startPolling() {
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/session/${sessionId}/status`);
+                if (!res.ok) return;
+                
+                const data = await res.json();
+                
+                if (data.ready) {
+                    updateFileCards(data.filename, data.filesize, data.totalChunks);
+                    
+                    if (data.chunksDelivered > 0 && data.chunksDelivered < data.totalChunks) {
+                        showState('transferring');
+                        updateTransferProgress(data.chunksDelivered, data.totalChunks);
+                    } else if (data.chunksDelivered >= data.totalChunks || data.status === 'claimed') {
+                        updateTransferProgress(data.totalChunks, data.totalChunks);
+                        setTimeout(() => showState('complete'), 400);
+                    }
+                }
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }, 800);
+    }
+
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+        setTimeout(() => errorMsg.style.display = 'none', 5000);
+    }
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.add('drag-over'));
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.remove('drag-over'));
+    });
+
+    dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    function handleFiles(newFiles) {
+        if (newFiles.length > 0) {
+            files = [newFiles[0]];
+            renderFiles();
+        }
+    }
+
+    function removeFile(index) {
+        files.splice(index, 1);
+        renderFiles();
+    }
+
+    function renderFiles() {
+        fileList.innerHTML = '';
+        uploadBtn.classList.toggle('active', files.length > 0);
+        
+        files.forEach((file, i) => {
+            const ext = file.name.split('.').pop() || '?';
+            const size = formatSize(file.size);
+            
+            const el = document.createElement('div');
+            el.className = 'file-item';
+            el.innerHTML = `
+                <span class="file-ext">${ext}</span>
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${size}</span>
+                </div>
+                <button class="file-remove" onclick="removeFile(${i})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            fileList.appendChild(el);
+        });
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+        if (files.length === 0) return;
+        
+        uploadBtn.classList.add('uploading');
+        uploadBtn.textContent = 'Uploading...';
+        progressSection.style.display = 'block';
+        errorMsg.style.display = 'none';
+        
+        const file = files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressStatus.textContent = pct < 100 ? 'Uploading...' : 'Processing...';
+                }
+            };
+            
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    const res = JSON.parse(xhr.responseText);
+                    updateFileCards(res.filename, res.originalSize, res.chunks);
+                    showState('waiting');
+                    startPolling();
+                } else {
+                    const err = JSON.parse(xhr.responseText);
+                    showError(err.error || 'Upload failed');
+                    resetUploadState();
+                }
+            };
+            
+            xhr.onerror = () => {
+                showError('Network error');
+                resetUploadState();
+            };
+            
+            xhr.open('POST', `/api/upload/${sessionId}`);
+            xhr.send(formData);
+            
+        } catch (e) {
+            showError('Upload failed: ' + e.message);
+            resetUploadState();
+        }
+    });
+
+    function resetUploadState() {
+        uploadBtn.classList.remove('uploading');
+        uploadBtn.textContent = 'Upload';
+        progressSection.style.display = 'none';
+        progressFill.style.width = '0%';
+    }
+
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    loadSession();
+</script>
+
+</body>
+</html>
